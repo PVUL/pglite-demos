@@ -7,18 +7,21 @@
     <!-- Include xterm.js and its dependencies -->
     <link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css" />
     <script src="https://unpkg.com/xterm/lib/xterm.js"></script>
-    <!--<script src="https://unpkg.com/xterm-addon-fit/@0.8.0/lib/xterm-addon-fit.js"></script>-->
-
-    <!--<script type="text/javascript" src="https://unpkg.com/asciitable.js/"></script>-->
-    asciit
     <script src="https://unpkg.com/xterm-addon-fit/lib/xterm-addon-fit.js"></script>
     <!-- Include PGlite -->
   </head>
   <body>
+    <div id="content">
+      <h1>xterm.js demo</h1>
+      <p>Simple demo of querying the pglite in-browser WASM database from an xterm.js user interface.</p>
+      <p>This demo features an ephemeral database with no persistent browser storage.</p>
+      <p>To test a simple query that does not require any database tables to exist, run <tt>select 'hello world';</tt></p>
+      <p>A test database has been pre-loaded. View its contents by issuing the command <tt>select * from test;</tt></p>
+      <p>Queries must end with a <tt>;</tt>. This allows queries to be added over multiple lines.</p>
+    </div>
+
     <div id="terminal"></div>
 
-    <script src="xterm.js" type="module">
- 
-    </script>
+    <script src="xterm.js" type="module"></script>
   </body>
 </html>

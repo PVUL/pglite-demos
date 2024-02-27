@@ -34,39 +34,61 @@ term.write(PROMPT);
 const commandHistory = [];
 let historyIndex = -1;
 
+let multiline_command = [];
+
 // Initialize PGlite
 const db = new PGlite();
 await createTable();
 
 // Pass 'idb://my-pgdata' for indexedDB persistence
 
+// Variable to store the current command
+let command = '';
+
+// Event listener for cursor move
+term.onCursorMove(() => {
+    // Update the command variable with the content of the current line
+    command = term.buffer.active.getLine(term.buffer.active.cursorY).translateToString().trim();
+    command = command.startsWith(PROMPT)
+          ? command.slice(PROMPT.length)
+          : command;
+    // Handle the command content as needed
+    //console.log("command fragment: " + command);
+});
+
 term.onKey(async (e) => {
   const printable =
     !e.domEvent.altKey && !e.domEvent.ctrlKey && !e.domEvent.metaKey;
   // Enter key
   if (e.domEvent.keyCode === 13) {
-    // Enter key
-    var command = term.buffer.active
-      .getLine(term.buffer.active.cursorY)
-      .translateToString()
-      .trim();
-    command = command.startsWith(PROMPT)
-      ? command.slice(PROMPT.length)
-      : PROMPT;
     term.writeln("");
-    console.log(command);
-    // Add the command to history
-    commandHistory.unshift(command);
-    historyIndex = -1;
-    await executeCommand(command, term);
-  } else if (e.domEvent.key === "ArrowUp") {
+    console.log("enter command fragment: " + command);
+    if (command != "") multiline_command.push(command);
+    console.log("mll: " + JSON.stringify(multiline_command));
+    if (command.endsWith(';')) {
+        command = multiline_command.join(" ");
+        try {
+          await executeCommand(command, term);
+          // Add the command fragment to history
+          commandHistory.unshift(command);
+          historyIndex = -1;
+        } catch (e) {
+          // Adjust for browser differences in Error.stack().
+          const report = (window["chrome"] ? "" : `${e.message}\n`) + e.stack;
+          output.innerHTML = `<pre>${report}</pre>`;
+        } finally {
+        }
+        multiline_command = [];
+    }
+    
+  } else if (e.domEvent.key === "ArrowUp" && multiline_command.length==0 ) {
     // Up arrow key pressed
     if (historyIndex < commandHistory.length - 1) {
       historyIndex++;
       const command = commandHistory[historyIndex];
-      term.write(command);
+      term.write("\x1b[K" + command);
     }
-  } else if (e.domEvent.key === "ArrowDown") {
+  } else if (e.domEvent.key === "ArrowDown" && multiline_command.length == 0) {
     // Down arrow key pressed
     if (historyIndex >= 0) {
       historyIndex--;
@@ -74,7 +96,16 @@ term.onKey(async (e) => {
       term.write("\x1b[K" + command); // Clear current line and write the command
     }
   } else if (e.domEvent.keyCode === 8) {
-    if (term.buffer.active.cursorX > PROMPT.length) term.write("\b \b");
+    // backspace
+    if (multiline_command.length == 0) {
+       if (term.buffer.active.cursorX > PROMPT.length)
+            term.write("\b \b");
+    } else term.write("\b \b");
+  } else if (e.domEvent.ctrlKey && e.domEvent.key === "c") {
+    term.writeln("");
+    term.prompt();
+    multiline_command = [];
+    command = "";
   } else if (printable) {
     term.write(e.key);
   }
