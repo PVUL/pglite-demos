@@ -1,0 +1,51 @@
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>wa-sqlite demo</title>
+    <style>
+      #editor-container {
+        width: 100%;
+        height: 50vh;
+      }
+
+      #vfs-container {
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+      }
+      #timestamp {
+        margin-top: 0.5em;
+      }
+
+      #output {
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+      }
+
+      table {
+        margin-top: 1em;
+        margin-left: 0.4em;
+        margin-right: 0.4em;
+        border-collapse: collapse;
+      }
+
+      td, th {
+        border: 1px solid #999;
+        padding: 0.5rem;
+        text-align: left;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="editor-container"></div>
+    <div><button id="execute">Execute</button></div>
+    <div id="timestamp"></div>
+    <div id="output"></div>
+    <div id="results"></div>
+
+    <script type="module" src="monaco.js"></script>
+
+   </body>
+</html>
