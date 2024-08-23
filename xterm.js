@@ -112,8 +112,13 @@ term.onKey(async (e) => {
 });
 
 async function executeCommand(command, term) {
+  console.log("trying")
+  const results = await db.query(command);
+  console.log("results");
+  console.log(JSON.stringify(results));
   try {
     const results = await db.query(command);
+    console.log(JSON.stringify(results));
     const formattedResults = formatResults(results);
     //const formattedResults = arrayToTable(results);
 
@@ -164,20 +169,24 @@ function arrayToMarkdownTable(array, columns, alignment = "center") {
 }
 
 // With help from ChatGPT
+
+// results format:
+//{"rows":[{"?column?":"asas"}],"fields":[{"name":"?column?","dataTypeID":25}],"affectedRows":0}
+
 function formatResults(results) {
   let formattedOutput = [];
 
-  if (results.length === 0) {
+  if (results.rows.length === 0) {
     formattedOutput.push("\x1b[31mNo results found.\x1b[0m");
   } else {
-    const keys = Object.keys(results[0]);
+    const keys = results.fields.map((field) => field.name);
     const columnWidths = {};
 
     // Calculate the maximum width for each column
     keys.forEach((key) => {
       const maxWidth = Math.max(
         key.length,
-        ...results.map((row) => String(row[key]).length)
+        ...results.rows.map((row) => String(row[key]).length)
       );
       columnWidths[key] = maxWidth;
     });
@@ -187,7 +196,7 @@ function formatResults(results) {
       "|" + keys.map((key) => key.padEnd(columnWidths[key])).join("|") + "|"
     );
 
-    results.forEach((row) => {
+    results.rows.forEach((row) => {
       lines.push(
         "|" +
           keys

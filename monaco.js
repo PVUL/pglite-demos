@@ -86,28 +86,32 @@ window.addEventListener("DOMContentLoaded", async function () {
     }
   });
 });
-
 function formatTable(results) {
   const table = document.createElement("table");
 
   const headerRow = table.insertRow();
-  Object.keys(results[0]).forEach((key) => {
+  results.fields.forEach((field) => {
     const th = document.createElement("th");
-    th.textContent = key;
+    th.textContent = field.name;
     headerRow.appendChild(th);
   });
+
   return table;
 }
 
+// results format:
+//{"rows":[{"?column?":"asas"}],"fields":[{"name":"?column?","dataTypeID":25}],"affectedRows":0}
+
 function formatRows(results, table) {
-  results.forEach((rowData) => {
+  results.rows.forEach((rowData) => {
     const row = table.insertRow();
-    Object.values(rowData).forEach((value) => {
+    results.fields.forEach((field) => {
       const cell = row.insertCell();
-      cell.textContent = value;
+      cell.textContent = rowData[field.name];
     });
   });
 }
+
 
 // Monaco handlers
 // Via https://rhashimoto.github.io/wa-sqlite/demo/
