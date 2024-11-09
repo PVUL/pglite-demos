@@ -1,17 +1,69 @@
 import { PGlite } from "https://cdn.jsdelivr.net/npm/@electric-sql/pglite/dist/index.js";
 // xterm module issue here: https://github.com/xtermjs/xterm.js/issues/2878
-async function createTable() {
+
+// Database initialization functions
+const ensureTablesExist = async () => {
+  // test table
   await db.query(`CREATE TABLE IF NOT EXISTS test (
-        id serial primary key,
-        title varchar not null
-      )`);
-  await db.query(
-    `INSERT INTO test (title) values ('Hello world') returning id;`
+    id serial primary key,
+    title varchar not null
+  )`);
+
+  // seeds table
+  await db.query(`CREATE TABLE IF NOT EXISTS seeds (
+    id serial primary key,
+    name varchar not null,
+    run_at timestamp default current_timestamp
+  )`);
+};
+
+const checkSeedStatus = async (seedName) => {
+  const seedCheck = await db.query(
+    `SELECT id FROM seeds WHERE name = $1`,
+    [seedName]
   );
-  await db.query("select * from test").then((resultsX) => {
-    console.log(JSON.stringify(resultsX));
-  });
-}
+  return seedCheck.rows.length > 0;
+};
+
+const markSeedComplete = async (seedName) => {
+  await db.query(
+    `INSERT INTO seeds (name) values ($1)`,
+    [seedName]
+  );
+};
+
+const runTestTableSeeds = async () => {
+  await db.query(
+    `INSERT INTO test (title) values 
+    ('Hello world'),
+    ('paul was here')`
+  );
+};
+
+const runSeed = async (seedName, seedFunction) => {
+  const isSeeded = await checkSeedStatus(seedName);
+  
+  if (!isSeeded) {
+    await db.query('BEGIN');
+    try {
+      await seedFunction();
+      await markSeedComplete(seedName);
+      await db.query('COMMIT');
+    } catch (error) {
+      await db.query('ROLLBACK');
+      throw error;
+    }
+  }
+};
+
+const createTable = async () => {
+  await ensureTablesExist();
+  await runSeed('initial_test_data', runTestTableSeeds);
+};
+
+//
+// -----------------------------------------------------
+//
 
 // Initialize xterm.js
 const term = new Terminal({ cursorBlink: true });
@@ -37,7 +89,7 @@ let historyIndex = -1;
 let multiline_command = [];
 
 // Initialize PGlite
-const db = new PGlite();
+const db = new PGlite('idb://my-pgdata') // const db = new PGlite();
 await createTable();
 
 // Pass 'idb://my-pgdata' for indexedDB persistence
