@@ -1,4 +1,6 @@
 import { PGlite } from "https://cdn.jsdelivr.net/npm/@electric-sql/pglite/dist/index.js";
+import { seed } from './seeds/01-test.js';
+
 // xterm module issue here: https://github.com/xtermjs/xterm.js/issues/2878
 
 // Database initialization functions
@@ -32,21 +34,13 @@ const markSeedComplete = async (seedName) => {
   );
 };
 
-const runTestTableSeeds = async () => {
-  await db.query(
-    `INSERT INTO test (title) values 
-    ('Hello world'),
-    ('paul was here')`
-  );
-};
-
 const runSeed = async (seedName, seedFunction) => {
   const isSeeded = await checkSeedStatus(seedName);
   
   if (!isSeeded) {
     await db.query('BEGIN');
     try {
-      await seedFunction();
+      await seedFunction(db);  // Pass db to the seed function
       await markSeedComplete(seedName);
       await db.query('COMMIT');
     } catch (error) {
@@ -58,7 +52,7 @@ const runSeed = async (seedName, seedFunction) => {
 
 const createTable = async () => {
   await ensureTablesExist();
-  await runSeed('initial_test_data', runTestTableSeeds);
+  await runSeed('01-test', seed);
 };
 
 //
