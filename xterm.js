@@ -108,7 +108,7 @@ let historyIndex = -1;
 let multiline_command = [];
 
 // Initialize PGlite
-const db = new PGlite('idb://my-pgdata') // const db = new PGlite();
+const db = new PGlite('idb://my-pgdata')
 await createTable();
 
 // Pass 'idb://my-pgdata' for indexedDB persistence
