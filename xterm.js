@@ -1,6 +1,4 @@
 import { PGlite } from "https://cdn.jsdelivr.net/npm/@electric-sql/pglite/dist/index.js";
-import { seed } from './seeds/01-test.js';
-
 // xterm module issue here: https://github.com/xtermjs/xterm.js/issues/2878
 
 // Database initialization functions
@@ -34,13 +32,44 @@ const markSeedComplete = async (seedName) => {
   );
 };
 
-const runSeed = async (seedName, seedFunction) => {
+const loadSeedData = async (seedName) => {
+  try {
+    const response = await fetch(`./seeds/${seedName}.json`);
+    if (!response.ok) {
+      throw new Error(`Seed file '${seedName}.json' not found`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(`Failed to load seed data: ${error.message}`);
+    throw error;
+  }
+};
+
+const runSeed = async (seedName) => {
   const isSeeded = await checkSeedStatus(seedName);
   
   if (!isSeeded) {
     await db.query('BEGIN');
     try {
-      await seedFunction(db);  // Pass db to the seed function
+      // Load and process the seed data
+      const seedData = await loadSeedData(seedName);
+      
+      for (const [table, rows] of Object.entries(seedData)) {
+        if (rows.length === 0) continue;
+        
+        const columns = Object.keys(rows[0]);
+        const values = rows.map(row => 
+          `(${columns.map(col => `'${row[col]}'`).join(',')})`
+        ).join(',');
+        
+        const query = `
+          INSERT INTO ${table} (${columns.join(',')})
+          VALUES ${values}
+        `;
+        
+        await db.query(query);
+      }
+      
       await markSeedComplete(seedName);
       await db.query('COMMIT');
     } catch (error) {
@@ -52,12 +81,8 @@ const runSeed = async (seedName, seedFunction) => {
 
 const createTable = async () => {
   await ensureTablesExist();
-  await runSeed('01-test', seed);
+  await runSeed('01-initial-test-data');
 };
-
-//
-// -----------------------------------------------------
-//
 
 // Initialize xterm.js
 const term = new Terminal({ cursorBlink: true });
